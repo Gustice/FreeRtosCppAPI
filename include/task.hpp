@@ -21,8 +21,8 @@ class Task {
         auto ret = xTaskCreate(call, name, DEFAULT_STACKSIZE, this, MIN_PRIORITY, &_handle);
         configASSERT(pdPASS == ret && "Task create must finish successfully");
     }
-    template<typename T>
-    Task(TaskSignature call, T & param, const char *name, size_t stack = DEFAULT_STACKSIZE,
+    template <typename T>
+    Task(TaskSignature call, T &param, const char *name, size_t stack = DEFAULT_STACKSIZE,
          Priority prio = MIN_PRIORITY) {
         auto ret = xTaskCreate(call, name, DEFAULT_STACKSIZE, &param, MIN_PRIORITY, &_handle);
         configASSERT(pdPASS == ret && "Task create must finish successfully");
@@ -31,6 +31,10 @@ class Task {
     ~Task() = default;
     // NOTE It can lead to undefined behaviour when one task deletes another task on a
     // multi-core system. Hence a task should clear itself.
+
+    void kill() {
+        vTaskDelete(_handle);
+    }
 
     static void delay(unsigned int msToDelay) {
         vTaskDelay(msToDelay / portTICK_PERIOD_MS);

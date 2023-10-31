@@ -96,6 +96,7 @@ static void testBinarySemTiming() {
         TEST_ASSERT_FALSE(passiveSem.take(0));
         TEST_ASSERT_INT_WITHIN(1, 0, timer.getRunTime());
     }
+    signaler.kill();
 }
 
 static Semaphore syncSem;
@@ -117,6 +118,8 @@ static void twoTasksThrowingSemaphores() {
     Task consumer(consumerTask, "consumer");
     vTaskDelay(5 * SHORT_DELAY);
     TEST_ASSERT_INT_WITHIN(1, 5, syncCount);
+    producer.kill();
+    consumer.kill();
 }
 
 void runSemaphoreTests(void) {

@@ -18,6 +18,7 @@ void taskToSuccess() {
 extern void runTaskTests(void);
 extern void runSemaphoreTests(void);
 extern void runQueueTests(void);
+extern void runMutexTests(void);
 
 extern "C" { // This switch allows the ROS C-implementation to find this main
 void app_main(void);
@@ -33,5 +34,6 @@ void app_main(void) {
     runTaskTests();
     runSemaphoreTests();
     runQueueTests();
+    runMutexTests();
     UNITY_END(); // stop unit testing
 }
