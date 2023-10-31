@@ -13,6 +13,7 @@ class Semaphore {
 
   public:
     using Tick = TickType_t;
+    static constexpr Tick MaxDelay = portMAX_DELAY;
 
     Semaphore() : SemType(Semaphore::Binary) {
         _handle = xSemaphoreCreateBinary();
@@ -29,11 +30,13 @@ class Semaphore {
     };
 
     void give() {
-        auto ret = xSemaphoreGive(_handle);
-        configASSERT(ret == pdPASS && "Underlying semaphore queue must be initialized correcty");
+        xSemaphoreGive(_handle);
+        // NOTE Binary semaphore can only given once.Next give leads to error
+        // auto ret = xSemaphoreGive(_handle);
+        // configASSERT(ret == pdPASS && "Underlying semaphore queue must be initialized correcty");
     }
 
-    bool take(Tick timeout = portMAX_DELAY) {
+    bool take(Tick timeout = MaxDelay) {
         auto ret = xSemaphoreTake(_handle, timeout);
         return ret == pdPASS;
     }
