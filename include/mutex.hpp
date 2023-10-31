@@ -13,7 +13,7 @@ class Mutex {
     using Tick = TickType_t;
     static constexpr Tick MaxDelay = portMAX_DELAY;
 
-    Mutex()  {
+    Mutex() {
         _handle = xSemaphoreCreateMutex();
         configASSERT(_handle != 0 && "Semaphore create must finish successfully");
     }
@@ -30,6 +30,25 @@ class Mutex {
     bool claim(Tick timeout = MaxDelay) {
         auto ret = xSemaphoreTake(_handle, timeout);
         return ret == pdPASS;
+    }
+};
+
+class MutexGuard {
+  private:
+    Mutex &_mutex;
+    bool _claimed;
+
+  public:
+    MutexGuard(Mutex &mtx, Mutex::Tick timeout = Mutex::MaxDelay) : _mutex(mtx) {
+        _claimed = _mutex.claim();
+    };
+
+    ~MutexGuard() {
+        if (!_claimed) {
+            return;
+        }
+
+        _mutex.release();
     }
 };
 
