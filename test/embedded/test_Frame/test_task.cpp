@@ -7,14 +7,6 @@
 
 using namespace fos;
 
-void setUp(void) {}
-
-void tearDown(void) {}
-
-void taskToSuccess() {
-    TEST_ASSERT_TRUE(true);
-}
-
 void testDelay() {
     TickType_t start = xTaskGetTickCount ();
     Task::delay(5 * portTICK_PERIOD_MS);
@@ -37,18 +29,8 @@ void checkIfTaskIsCreatedAndCalled(void) {
     TEST_ASSERT_TRUE(boolTask1WasCalled);
 }
 
-extern "C" { // This switch allows the ROS C-implementation to find this main
-void app_main(void);
-}
 
-void app_main(void) {
-    // NOTE!!! Wait for >2 secs
-    // if board doesn't support software reset via Serial.DTR/RTS
-    vTaskDelay(2000 / portTICK_PERIOD_MS);
-
-    UNITY_BEGIN(); // IMPORTANT LINE!
-    RUN_TEST(taskToSuccess);
+void runTaskTests(void) {
     RUN_TEST(testDelay);
     RUN_TEST(checkIfTaskIsCreatedAndCalled);
-    UNITY_END(); // stop unit testing
 }
