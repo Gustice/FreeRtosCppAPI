@@ -1,0 +1,36 @@
+#pragma once
+
+#include <freertos/FreeRTOS.h>
+#include <freertos/semphr.h>
+
+namespace fos {
+
+class Mutex {
+  private:
+    QueueHandle_t _handle;
+
+  public:
+    using Tick = TickType_t;
+    static constexpr Tick MaxDelay = portMAX_DELAY;
+
+    Mutex()  {
+        _handle = xSemaphoreCreateBinary();
+        configASSERT(_handle != 0 && "Semaphore create must finish successfully");
+    }
+
+    ~Mutex() {
+        vSemaphoreDelete(_handle);
+    };
+
+    void give() {
+        auto ret = xSemaphoreGive(_handle);
+        configASSERT(ret == pdPASS && "Underlying semaphore queue must be initialized correcty");
+    }
+
+    bool take(Tick timeout = MaxDelay) {
+        auto ret = xSemaphoreTake(_handle, timeout);
+        return ret == pdPASS;
+    }
+};
+
+} // namespace fos
