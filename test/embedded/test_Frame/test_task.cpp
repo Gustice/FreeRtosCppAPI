@@ -27,6 +27,7 @@ void checkIfTaskIsCreatedAndCalled(void) {
     static Task task(callableTask, "task1");
     Task::delay(50);
     TEST_ASSERT_TRUE(taskWasCalled);
+    task.kill();
 }
 
 void runTaskTests(void) {

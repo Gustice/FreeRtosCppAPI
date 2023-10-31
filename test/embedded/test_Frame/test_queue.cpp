@@ -90,7 +90,7 @@ void enqueue_till_overflow(void) {
     TEST_ASSERT_EQUAL(pE, r.get());
 }
 
-void enqueue_then_dequeue_to_many(void) {
+void enqueueThenDequeueTooMany(void) {
     MessageQueue<MessageFrame> eut(10);
 
     auto e = std::make_unique<MessageFrame>(1, "one");
@@ -133,6 +133,7 @@ static void testTiming() {
         TEST_ASSERT_NULL(r.get());
         TEST_ASSERT_INT_WITHIN(1, 20, timer.getRunTime());
     }
+    signaler.kill();
 }
 
 static void senderTask(void *arg) {
@@ -148,7 +149,7 @@ static void senderTask(void *arg) {
 void enqueueSeriesOfMessages(void) {
     constexpr int Size = 10;
     MessageQueue<MessageFrame> eut(Size);
-    Task signaler(senderTask, eut, "displayTask");
+    Task sender(senderTask, eut, "displayTask");
     for (size_t i = 0; i < Size * 2; i++) {
         auto r = eut.dequeue(100);
         TEST_ASSERT_NOT_NULL(r.get());
@@ -156,6 +157,7 @@ void enqueueSeriesOfMessages(void) {
     }
     eut.signalClose();
     TEST_ASSERT_TRUE(true);
+    sender.kill();
 }
 
 
@@ -164,7 +166,7 @@ void runQueueTests(void) {
     RUN_TEST(enqueueThenDequeueMultiple);
     RUN_TEST(enqueueCyclically);
     RUN_TEST(enqueue_till_overflow);
-    RUN_TEST(enqueue_then_dequeue_to_many);
+    RUN_TEST(enqueueThenDequeueTooMany);
     RUN_TEST(testTiming);
     RUN_TEST(enqueueSeriesOfMessages);
 }

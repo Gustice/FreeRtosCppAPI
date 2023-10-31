@@ -7,6 +7,7 @@
 
 #include "task.hpp"
 #include "semaphore.hpp"
+#include "mutex.hpp"
 #include "queue.hpp"
 
 using namespace fos;
