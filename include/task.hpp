@@ -1,5 +1,4 @@
-#if !defined(TASK_H)
-#define TASK_H
+#pragma once
 
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
@@ -38,5 +37,3 @@ class Task {
 };
 
 } // namespace fos
-
-#endif // TASK_H

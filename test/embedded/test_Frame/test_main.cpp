@@ -1,7 +1,7 @@
+#include "esp_log.h"
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
 #include <unity.h>
-#include "esp_log.h"
 
 #include "task.hpp"
 
@@ -16,6 +16,7 @@ void taskToSuccess() {
 }
 
 extern void runTaskTests(void);
+extern void runSemaphoreTests(void);
 
 extern "C" { // This switch allows the ROS C-implementation to find this main
 void app_main(void);
@@ -29,5 +30,6 @@ void app_main(void) {
     UNITY_BEGIN(); // IMPORTANT LINE!
     RUN_TEST(taskToSuccess);
     runTaskTests();
+    runSemaphoreTests();
     UNITY_END(); // stop unit testing
 }
