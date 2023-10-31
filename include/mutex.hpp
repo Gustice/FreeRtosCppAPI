@@ -40,7 +40,7 @@ class MutexGuard {
 
   public:
     MutexGuard(Mutex &mtx, Mutex::Tick timeout = Mutex::MaxDelay) : _mutex(mtx) {
-        _claimed = _mutex.claim();
+        _claimed = _mutex.claim(timeout);
     };
 
     ~MutexGuard() {
@@ -50,6 +50,8 @@ class MutexGuard {
 
         _mutex.release();
     }
+
+    bool isActive() { return _claimed; }
 };
 
 } // namespace fos

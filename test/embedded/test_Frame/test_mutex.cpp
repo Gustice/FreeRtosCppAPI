@@ -70,8 +70,29 @@ static void testMutexTiming() {
     claimer.kill();
 }
 
+static void testMutexGuard() {
+    Mutex mtx;
+
+    {
+        MutexGuard eut(mtx,100);
+        TEST_ASSERT_TRUE(eut.isActive());
+        // already taken
+        TEST_ASSERT_FALSE(mtx.claim(0));
+    }
+    // now free to go
+    TEST_ASSERT_TRUE(mtx.claim(0));
+
+    { // Timeout
+        TimeTest timer;
+        MutexGuard eut(mtx, SHORT_DELAY);
+        TEST_ASSERT_FALSE(eut.isActive());
+        TEST_ASSERT_INT_WITHIN(1, SHORT_DELAY, timer.getRunTime());
+    }
+
+}
 
 void runMutexTests(void) {
     RUN_TEST(testMutex);
     RUN_TEST(testMutexTiming);
+    RUN_TEST(testMutexGuard);
 }
