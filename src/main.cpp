@@ -6,6 +6,8 @@
 #include <stdio.h>
 
 #include "task.hpp"
+#include "semaphore.hpp"
+
 using namespace fos;
 
 const int StackSize = 2048;
@@ -14,10 +16,10 @@ extern "C" { // This switch allows the ROS C-implementation to find this main
 void app_main(void);
 }
 
-static bool boolTask1WasCalled = false;
+static bool taskWasCalled = false;
 void task1(void *) {
     ESP_LOGI("Test", "subroutinge called");
-    boolTask1WasCalled = true;
+    taskWasCalled = true;
     while (true) {
         vTaskDelay(100);
     }

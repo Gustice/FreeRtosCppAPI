@@ -15,18 +15,18 @@ void testDelay() {
     TEST_ASSERT_LESS_OR_EQUAL(6, (end-start));
 }
 
-static bool boolTask1WasCalled = false;
-void task1(void *) {
-    boolTask1WasCalled = true;
+static bool taskWasCalled = false;
+static void callableTask(void *) {
+    taskWasCalled = true;
     while (true) {
         vTaskDelay(100);
     }
 }
 
 void checkIfTaskIsCreatedAndCalled(void) {
-    static Task task(task1, "task1");
+    static Task task(callableTask, "task1");
     Task::delay(50);
-    TEST_ASSERT_TRUE(boolTask1WasCalled);
+    TEST_ASSERT_TRUE(taskWasCalled);
 }
 
 
