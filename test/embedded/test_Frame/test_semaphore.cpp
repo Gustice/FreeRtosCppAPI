@@ -11,6 +11,62 @@ using namespace fos;
 
 constexpr int SHORT_DELAY = 10;
 
+static void testBinarySem() {
+    Semaphore eut;
+    // first take fails
+    TEST_ASSERT_FALSE(eut.take(0));
+    eut.give();
+    // first take after give fails
+    TEST_ASSERT_TRUE(eut.take(0));
+    TEST_ASSERT_FALSE(eut.take(0));
+
+    eut.give();
+    eut.give();
+    TEST_ASSERT_TRUE(eut.take(0));
+    // second take after give fails
+    TEST_ASSERT_FALSE(eut.take(0));
+}
+
+static void testCountingSem() {
+    Semaphore eut(2,0);
+    // first take fails
+    TEST_ASSERT_FALSE(eut.take(0));
+    eut.give();
+    // first take after give fails
+    TEST_ASSERT_TRUE(eut.take(0));
+    TEST_ASSERT_FALSE(eut.take(0));
+
+    eut.give();
+    eut.give();
+    TEST_ASSERT_TRUE(eut.take(0));
+    TEST_ASSERT_TRUE(eut.take(0));
+    // third take after give fails
+    TEST_ASSERT_FALSE(eut.take(0));
+
+    eut.give();
+    eut.give();
+    eut.give();
+    TEST_ASSERT_TRUE(eut.take(0));
+    TEST_ASSERT_TRUE(eut.take(0));
+    // still third take after give fails
+    TEST_ASSERT_FALSE(eut.take(0));
+}
+
+static void testCountingSemInit() {
+    Semaphore eut(2,2);
+    TEST_ASSERT_TRUE(eut.take(0));
+    TEST_ASSERT_TRUE(eut.take(0));
+    // third take fails
+    TEST_ASSERT_FALSE(eut.take(0));
+
+    eut.give();
+    // first take after give fails
+    TEST_ASSERT_TRUE(eut.take(0));
+    TEST_ASSERT_FALSE(eut.take(0));
+
+    // ...
+}
+
 static Semaphore binSem1;
 static void test1Signal(void *) {
     vTaskDelay(SHORT_DELAY);
@@ -20,9 +76,9 @@ static void test1Signal(void *) {
     };
 }
 
-static void testBinarySem() {
+static void testBinarySemTiming() {
+    Task signaler(test1Signal, "signal1");
     { // All ok
-        Task signaler(test1Signal, "signal1");
         TimeTest timer;
         TEST_ASSERT_TRUE(binSem1.take(100));
         TEST_ASSERT_INT_WITHIN(1, SHORT_DELAY, timer.getRunTime());
@@ -33,67 +89,12 @@ static void testBinarySem() {
         TEST_ASSERT_FALSE(binSem1.take(20));
         TEST_ASSERT_INT_WITHIN(1, 20, timer.getRunTime());
     }
-}
 
-static Semaphore cntSem1(2, 0);
-static void test2Signal(void *) {
-    vTaskDelay(SHORT_DELAY);
-    cntSem1.give();
-    cntSem1.give();
-    while (true) {
-        vTaskDelay(1000);
-    };
-}
-
-static void testCountingSem() {
-    { // All ok
-        Task signaler(test2Signal, "signal2");
+    { // NoWeit timeout
+        Semaphore passiveSem;
         TimeTest timer;
-        TEST_ASSERT_TRUE(cntSem1.take(100));
-        TEST_ASSERT_INT_WITHIN(1, SHORT_DELAY, timer.getRunTime());
-
-        // can take second semaphore instantly
-        TEST_ASSERT_TRUE(cntSem1.take(100));
-        TEST_ASSERT_INT_WITHIN(1, SHORT_DELAY, timer.getRunTime());
-    }
-
-    { // Timout
-        TimeTest timer;
-        TEST_ASSERT_FALSE(cntSem1.take(20));
-        TEST_ASSERT_INT_WITHIN(1, 20, timer.getRunTime());
-    }
-}
-
-static Semaphore cntSem2(2, 2);
-static void test3Signal(void *) {
-    vTaskDelay(SHORT_DELAY);
-    cntSem2.give();
-    cntSem2.give();
-    while (true) {
-        vTaskDelay(1000);
-    };
-}
-
-static void testCountingSemWithInit() {
-    { // All ok
-        Task signaler(test3Signal, "signal3");
-        TimeTest timer;
-        // First two semaphores instantly
-        TEST_ASSERT_TRUE(cntSem2.take(0));
-        TEST_ASSERT_TRUE(cntSem2.take(0));
-        // then after 20 ms
-        TEST_ASSERT_TRUE(cntSem2.take(100));
-        TEST_ASSERT_INT_WITHIN(1, SHORT_DELAY, timer.getRunTime());
-
-        // can take second semaphore instantly
-        TEST_ASSERT_TRUE(cntSem2.take(100));
-        TEST_ASSERT_INT_WITHIN(1, SHORT_DELAY, timer.getRunTime());
-    }
-
-    { // Timout
-        TimeTest timer;
-        TEST_ASSERT_FALSE(cntSem2.take(20));
-        TEST_ASSERT_INT_WITHIN(1, 20, timer.getRunTime());
+        TEST_ASSERT_FALSE(passiveSem.take(0));
+        TEST_ASSERT_INT_WITHIN(1, 0, timer.getRunTime());
     }
 }
 
@@ -118,20 +119,10 @@ static void twoTasksThrowingSemaphores() {
     TEST_ASSERT_INT_WITHIN(1, 5, syncCount);
 }
 
-static Semaphore passiveSem;
-
-static void testNoWaitOnSemaphore() {
-    { // Timout
-        TimeTest timer;
-        TEST_ASSERT_FALSE(binSem1.take(0));
-        TEST_ASSERT_INT_WITHIN(1, 0, timer.getRunTime());
-    }
-}
-
 void runSemaphoreTests(void) {
     RUN_TEST(testBinarySem);
     RUN_TEST(testCountingSem);
-    RUN_TEST(testCountingSemWithInit);
+    RUN_TEST(testCountingSemInit);
+    RUN_TEST(testBinarySemTiming);
     RUN_TEST(twoTasksThrowingSemaphores);
-    RUN_TEST(testNoWaitOnSemaphore);
 }
