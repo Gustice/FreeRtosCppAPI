@@ -13,6 +13,9 @@ template <typename T> class MessageQueue {
     QueueHandle_t xQueue;
 
   public:
+    using Tick = TickType_t;
+    static constexpr Tick MaxDelay = portMAX_DELAY;
+
     MessageQueue(size_t size) {
         xQueue = xQueueCreate(size, sizeof(T *));
         configASSERT(xQueue != 0 && "Queue create must finish successfully");
@@ -34,7 +37,7 @@ template <typename T> class MessageQueue {
         return message;
     }
 
-    std::unique_ptr<T> dequeue(uint32_t timeout = portMAX_DELAY) {
+    std::unique_ptr<T> dequeue(Tick timeout = MaxDelay) {
         T *pMsg = nullptr;
         if (!xQueueReceive(xQueue, &pMsg, timeout)) {
             return {nullptr};
@@ -42,7 +45,7 @@ template <typename T> class MessageQueue {
         return std::unique_ptr<T>(pMsg);
     }
 
-    std::unique_ptr<T> dequeueLatest(uint32_t timeout = portMAX_DELAY) {
+    std::unique_ptr<T> dequeueLatest(Tick timeout = MaxDelay) {
         T *pMsg = nullptr;
         if (!xQueueReceive(xQueue, &pMsg, timeout)) {
             return {nullptr};

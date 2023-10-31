@@ -21,6 +21,12 @@ class Task {
         auto ret = xTaskCreate(call, name, DEFAULT_STACKSIZE, this, MIN_PRIORITY, &_handle);
         configASSERT(pdPASS == ret && "Task create must finish successfully");
     }
+    template<typename T>
+    Task(TaskSignature call, T & param, const char *name, size_t stack = DEFAULT_STACKSIZE,
+         Priority prio = MIN_PRIORITY) {
+        auto ret = xTaskCreate(call, name, DEFAULT_STACKSIZE, &param, MIN_PRIORITY, &_handle);
+        configASSERT(pdPASS == ret && "Task create must finish successfully");
+    }
 
     ~Task() = default;
     // NOTE It can lead to undefined behaviour when one task deletes another task on a
