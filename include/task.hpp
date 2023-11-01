@@ -21,24 +21,48 @@ namespace fos {
 class Task {
   private:
     /// @brief Signature for task-implementation-callback
+    using TaskVoidSignature = void (*)();
     using TaskSignature = void (*)(void *);
     TaskHandle_t _handle;
 
-    static void TaskFrame(void *_this) {
-        vTaskDelete(NULL); // Delete this task if callback ever returns
+    static void TaskFrameVoid(void *_this) {
+        reinterpret_cast<Task *>(_this)->_paramVoid.call();
+        vTaskDelete(NULL); 
+        // Delete this task if callback ever returns
                            // NOTE: This compiles only if INCLUDE_vTaskDelete is defined to 1
     }
 
-  public:
-    /// @brief Priority type (redefinition for convenience)
-    using Priority = unsigned short;
+    static void TaskFrame(void *_this) {
+        auto task = reinterpret_cast<Task *>(_this);
+        task->_param.call(task->_param.arg);
+        vTaskDelete(NULL); 
+        // Delete this task if callback ever returns
+        // NOTE: This compiles only if INCLUDE_vTaskDelete is defined to 1
+    }
+
+
+    struct ParamVoid {
+      TaskVoidSignature call;
+    };
+    ParamVoid _paramVoid;
+
+    struct Param {
+      TaskSignature call;
+      void * arg;
+    };
+    Param _param;
+
+
+    public :
+        /// @brief Priority type (redefinition for convenience)
+        using Priority = unsigned short;
 
     /// @brief Default Stack size
     static constexpr size_t DEFAULT_STACKSIZE = 0x400; // 4k
 
     /// @brief Lowes priority for new tasks
     static constexpr Priority MIN_PRIORITY = tskIDLE_PRIORITY;
-    
+
     /// @brief Highest priority for new tasks
     static constexpr Priority MAX_PRIORITY = configMAX_PRIORITIES;
 
@@ -47,9 +71,9 @@ class Task {
     /// @param name Name of task
     /// @param stack Stacksize if not default
     /// @param prio Priority if not default
-    Task(TaskSignature call, const char *name, size_t stack = DEFAULT_STACKSIZE,
-         Priority prio = MIN_PRIORITY) {
-        auto ret = xTaskCreate(call, name, DEFAULT_STACKSIZE, this, MIN_PRIORITY, &_handle);
+    Task(TaskVoidSignature call, const char *name, size_t stack = DEFAULT_STACKSIZE,
+         Priority prio = MIN_PRIORITY) : _paramVoid{call} {
+        auto ret = xTaskCreate(TaskFrameVoid, name, DEFAULT_STACKSIZE, this, MIN_PRIORITY, &_handle);
         configASSERT(pdPASS == ret && "Task create must finish successfully");
     }
 
@@ -62,8 +86,8 @@ class Task {
     /// @param prio Priority if not default
     template <typename T>
     Task(TaskSignature call, T &param, const char *name, size_t stack = DEFAULT_STACKSIZE,
-         Priority prio = MIN_PRIORITY) {
-        auto ret = xTaskCreate(call, name, DEFAULT_STACKSIZE, &param, MIN_PRIORITY, &_handle);
+         Priority prio = MIN_PRIORITY) : _param{call, &param} {
+        auto ret = xTaskCreate(TaskFrame, name, DEFAULT_STACKSIZE, this, MIN_PRIORITY, &_handle);
         configASSERT(pdPASS == ret && "Task create must finish successfully");
     }
 

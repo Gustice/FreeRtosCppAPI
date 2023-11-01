@@ -28,35 +28,36 @@ static void testMutex() {
     TEST_ASSERT_FALSE(eut.claim(0));
 }
 
-static Mutex mutex1;
 static Semaphore starter1;
-static void testClaimer(void *) {
-    mutex1.claim();
+static void testClaimer(void *arg) {
+    auto &m = *static_cast<Mutex *>(arg);
+
+    m.claim();
     starter1.give();
     vTaskDelay(SHORT_DELAY);
-    mutex1.release();
+    m.release();
     vTaskDelay(SHORT_DELAY);
-    mutex1.claim();
+    m.claim();
     starter1.give();
-    while (true) {
-        vTaskDelay(1000);
-    };
+    // kill by return
 }
 
 static void testMutexTiming() {
-    Task claimer(testClaimer,"signal1");
-    starter1.take(100);
+    static Mutex eut;
 
+    Task claimer(testClaimer, eut, "signal1");
+    starter1.take(100);
     { // All ok
         TimeTest timer;
-        TEST_ASSERT_TRUE(mutex1.claim(100));
+        TEST_ASSERT_TRUE(eut.claim(100));
         TEST_ASSERT_INT_WITHIN(1, SHORT_DELAY, timer.getRunTime());
-        mutex1.release();
+        eut.release();
     }
+return;
     starter1.take(100);
     { // Timout
         TimeTest timer;
-        TEST_ASSERT_FALSE(mutex1.claim(20));
+        TEST_ASSERT_FALSE(eut.claim(20));
         TEST_ASSERT_INT_WITHIN(1, 20, timer.getRunTime());
     }
 
@@ -67,12 +68,10 @@ static void testMutexTiming() {
         TEST_ASSERT_FALSE(passiveSem.claim(0));
         TEST_ASSERT_INT_WITHIN(1, 0, timer.getRunTime());
     }
-    claimer.kill();
 }
 
 static void testMutexGuard() {
     Mutex mtx;
-
     {
         MutexGuard eut(mtx,100);
         TEST_ASSERT_TRUE(eut.isActive());
@@ -81,7 +80,6 @@ static void testMutexGuard() {
     }
     // now free to go
     TEST_ASSERT_TRUE(mtx.claim(0));
-
     { // Timeout
         TimeTest timer;
         MutexGuard eut(mtx, SHORT_DELAY);

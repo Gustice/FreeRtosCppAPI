@@ -28,7 +28,7 @@ static void testBinarySem() {
 }
 
 static void testCountingSem() {
-    Semaphore eut(2,0);
+    Semaphore eut(2, 0);
     // first take fails
     TEST_ASSERT_FALSE(eut.take(0));
     eut.give();
@@ -53,7 +53,7 @@ static void testCountingSem() {
 }
 
 static void testCountingSemInit() {
-    Semaphore eut(2,2);
+    Semaphore eut(2, 2);
     TEST_ASSERT_TRUE(eut.take(0));
     TEST_ASSERT_TRUE(eut.take(0));
     // third take fails
@@ -67,26 +67,27 @@ static void testCountingSemInit() {
     // ...
 }
 
-static Semaphore binSem1;
-static void test1Signal(void *) {
+static void test1Signal(void *arg) {
+    auto &s = *static_cast<Semaphore *>(arg);
+
     vTaskDelay(SHORT_DELAY);
-    binSem1.give();
-    while (true) {
-        vTaskDelay(1000);
-    };
+    s.give();
+    // Kill by return
 }
 
 static void testBinarySemTiming() {
-    Task signaler(test1Signal, "signal1");
+    static Semaphore eut;
+
+    Task signaler(test1Signal, eut, "signal1");
     { // All ok
         TimeTest timer;
-        TEST_ASSERT_TRUE(binSem1.take(100));
+        TEST_ASSERT_TRUE(eut.take(100));
         TEST_ASSERT_INT_WITHIN(1, SHORT_DELAY, timer.getRunTime());
     }
 
     { // Timout
         TimeTest timer;
-        TEST_ASSERT_FALSE(binSem1.take(20));
+        TEST_ASSERT_FALSE(eut.take(20));
         TEST_ASSERT_INT_WITHIN(1, 20, timer.getRunTime());
     }
 
@@ -96,26 +97,30 @@ static void testBinarySemTiming() {
         TEST_ASSERT_FALSE(passiveSem.take(0));
         TEST_ASSERT_INT_WITHIN(1, 0, timer.getRunTime());
     }
-    signaler.kill();
 }
 
-static Semaphore syncSem;
 static int syncCount = 0;
-static void producerTask(void *) {
+static void producerTask(void *arg) {
+    auto &s = *static_cast<Semaphore *>(arg);
+
     while (true) {
-        syncSem.give();
+        s.give();
         vTaskDelay(SHORT_DELAY);
     };
 }
-static void consumerTask(void *) {
+static void consumerTask(void *arg) {
+    auto &s = *static_cast<Semaphore *>(arg);
+
     while (true) {
-        syncSem.take();
+        s.take();
         syncCount++;
     };
 }
 static void twoTasksThrowingSemaphores() {
-    Task producer(producerTask, "producer");
-    Task consumer(consumerTask, "consumer");
+    static Semaphore eut;
+
+    Task producer(producerTask, eut, "producer");
+    Task consumer(consumerTask, eut, "consumer");
     vTaskDelay(5 * SHORT_DELAY);
     TEST_ASSERT_INT_WITHIN(1, 5, syncCount);
     producer.kill();

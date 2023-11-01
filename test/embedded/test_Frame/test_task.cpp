@@ -16,21 +16,40 @@ void testDelay() {
 }
 
 static bool taskWasCalled = false;
-static void callableTask(void *) {
+static void callableTask() {
     taskWasCalled = true;
     while (true) {
         vTaskDelay(100);
     }
 }
 
-void checkIfTaskIsCreatedAndCalled(void) {
+void checkIfTaskIsCreatedAndCalled() {
     static Task task(callableTask, "task1");
     Task::delay(50);
     TEST_ASSERT_TRUE(taskWasCalled);
     task.kill();
 }
 
+static void callableTask2() {
+    taskWasCalled = true;
+    while (true) {
+        vTaskDelay(100);
+    }
+}
+
+void checkIfTaskIsKilled() {
+    static Task task(callableTask2, "task2");
+    auto handle = xTaskGetHandle("task2");
+    configASSERT(handle);
+    TEST_ASSERT_EQUAL(eTaskState::eReady, eTaskGetState(handle));
+    Task::delay(50);
+    TEST_ASSERT_TRUE(taskWasCalled);
+    task.kill();
+    TEST_ASSERT_EQUAL(eTaskState::eDeleted, eTaskGetState(handle));
+}
+
 void runTaskTests(void) {
     RUN_TEST(testDelay);
     RUN_TEST(checkIfTaskIsCreatedAndCalled);
+    RUN_TEST(checkIfTaskIsKilled);
 }

@@ -86,7 +86,7 @@ void enqueue_till_overflow(void) {
     auto pE = e.get();
     r = eut.enqueue(std::move(e));
     TEST_ASSERT_NOT_EQUAL(nullptr, r.get());
-    // also return old element ... 
+    // also return old element ...
     TEST_ASSERT_EQUAL(pE, r.get());
 }
 
@@ -108,32 +108,30 @@ void enqueueThenDequeueTooMany(void) {
     TEST_ASSERT_EQUAL(nullptr, r.get());
 }
 
-static MessageQueue<MessageFrame> queue1(8);
-static void queue1Gen(void *) {
+static void queue1Gen(void *arg) {
+    auto &q = *static_cast<MessageQueue<MessageFrame> *>(arg);
     vTaskDelay(SHORT_DELAY);
     auto e = std::make_unique<MessageFrame>(0, "msg");
-    queue1.enqueue(std::move(e));
-    while (true) {
-        vTaskDelay(1000);
-    };
+    q.enqueue(std::move(e));
+    // Kill by return
 }
 
 static void testTiming() {
-    Task signaler(queue1Gen, "signal1");
+    static MessageQueue<MessageFrame> eut(8);
+    Task signaler(queue1Gen, eut, "signal1");
     { // All ok
         TimeTest timer;
-        auto r = queue1.dequeue(100);
+        auto r = eut.dequeue(100);
         TEST_ASSERT_NOT_NULL(r.get());
         TEST_ASSERT_INT_WITHIN(1, SHORT_DELAY, timer.getRunTime());
     }
 
     { // Timout
         TimeTest timer;
-        auto r = queue1.dequeue(20);
+        auto r = eut.dequeue(20);
         TEST_ASSERT_NULL(r.get());
         TEST_ASSERT_INT_WITHIN(1, 20, timer.getRunTime());
     }
-    signaler.kill();
 }
 
 static void senderTask(void *arg) {
@@ -160,7 +158,6 @@ void enqueueSeriesOfMessages(void) {
     sender.kill();
 }
 
-
 void runQueueTests(void) {
     RUN_TEST(enqueueThenDequeue);
     RUN_TEST(enqueueThenDequeueMultiple);
@@ -170,7 +167,3 @@ void runQueueTests(void) {
     RUN_TEST(testTiming);
     RUN_TEST(enqueueSeriesOfMessages);
 }
-
-
-
-
