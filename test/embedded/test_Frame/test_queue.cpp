@@ -17,7 +17,7 @@ struct MessageFrame {
     std::string message;
 };
 
-void enqueueThenDequeue(void) {
+static void enqueueThenDequeue(void) {
     MessageQueue<MessageFrame> eut(10);
 
     auto e = std::make_unique<MessageFrame>(1, "one");
@@ -29,7 +29,7 @@ void enqueueThenDequeue(void) {
     TEST_ASSERT_TRUE(r->message == "one");
 }
 
-void enqueueThenDequeueMultiple(void) {
+static void enqueueThenDequeueMultiple(void) {
     MessageQueue<MessageFrame> eut(10);
 
     auto e = std::make_unique<MessageFrame>(1, "one");
@@ -53,7 +53,7 @@ void enqueueThenDequeueMultiple(void) {
     TEST_ASSERT_TRUE(r->message == "three");
 }
 
-void enqueueCyclically(void) {
+static void enqueueCyclically(void) {
     constexpr int Size = 10;
     MessageQueue<MessageFrame> eut(Size);
     for (size_t i = 0; i < Size * 2; i++) {
@@ -67,7 +67,7 @@ void enqueueCyclically(void) {
     TEST_ASSERT_TRUE(true);
 }
 
-void enqueue_till_overflow(void) {
+static void enqueue_till_overflow(void) {
     MessageQueue<MessageFrame> eut(3);
 
     auto e = std::make_unique<MessageFrame>(1, "one");
@@ -90,7 +90,7 @@ void enqueue_till_overflow(void) {
     TEST_ASSERT_EQUAL(pE, r.get());
 }
 
-void enqueueThenDequeueTooMany(void) {
+static void enqueueThenDequeueTooMany(void) {
     MessageQueue<MessageFrame> eut(10);
 
     auto e = std::make_unique<MessageFrame>(1, "one");
@@ -118,7 +118,7 @@ static void queue1Gen(void *arg) {
 
 static void testTiming() {
     static MessageQueue<MessageFrame> eut(8);
-    Task signaler(queue1Gen, eut, "signal1");
+    Task signaler(queue1Gen, eut, "queue1Gen");
     { // All ok
         TimeTest timer;
         auto r = eut.dequeue(100);
@@ -144,10 +144,10 @@ static void senderTask(void *arg) {
     }
 }
 
-void enqueueSeriesOfMessages(void) {
+static void enqueueSeriesOfMessages(void) {
     constexpr int Size = 10;
     MessageQueue<MessageFrame> eut(Size);
-    Task sender(senderTask, eut, "displayTask");
+    Task sender(senderTask, eut, "sender");
     for (size_t i = 0; i < Size * 2; i++) {
         auto r = eut.dequeue(100);
         TEST_ASSERT_NOT_NULL(r.get());

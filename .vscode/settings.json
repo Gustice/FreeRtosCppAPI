@@ -1,4 +1,6 @@
 {
+    "C_Cpp.autoAddFileAssociations": false,
+    "editor.formatOnSave": true,
     "doxdocgen.c.triggerSequence": "/**",
     "doxdocgen.generic.authorName": "Gustice",
     "doxdocgen.generic.dateFormat": "YYYY-MM-DD",

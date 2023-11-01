@@ -17,7 +17,7 @@ static void testMutex() {
     // first take fails
     TEST_ASSERT_TRUE(eut.claim(0));
     eut.release();
-    
+
     TEST_ASSERT_TRUE(eut.claim(0));
     TEST_ASSERT_FALSE(eut.claim(0));
 
@@ -53,7 +53,6 @@ static void testMutexTiming() {
         TEST_ASSERT_INT_WITHIN(1, SHORT_DELAY, timer.getRunTime());
         eut.release();
     }
-return;
     starter1.take(100);
     { // Timout
         TimeTest timer;
@@ -73,7 +72,7 @@ return;
 static void testMutexGuard() {
     Mutex mtx;
     {
-        MutexGuard eut(mtx,100);
+        MutexGuard eut(mtx, 100);
         TEST_ASSERT_TRUE(eut.isActive());
         // already taken
         TEST_ASSERT_FALSE(mtx.claim(0));
@@ -86,7 +85,6 @@ static void testMutexGuard() {
         TEST_ASSERT_FALSE(eut.isActive());
         TEST_ASSERT_INT_WITHIN(1, SHORT_DELAY, timer.getRunTime());
     }
-
 }
 
 void runMutexTests(void) {

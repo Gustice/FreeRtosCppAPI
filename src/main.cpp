@@ -5,10 +5,10 @@
 #include "sdkconfig.h"
 #include <stdio.h>
 
-#include "task.hpp"
-#include "semaphore.hpp"
 #include "mutex.hpp"
 #include "queue.hpp"
+#include "semaphore.hpp"
+#include "task.hpp"
 
 using namespace fos;
 
@@ -19,7 +19,7 @@ void app_main(void);
 }
 
 static bool taskWasCalled = false;
-void task1(void *) {
+void task1() {
     ESP_LOGI("Test", "subroutinge called");
     taskWasCalled = true;
     while (true) {
