@@ -1,3 +1,50 @@
+#ifdef ARDUINO_ARCH_STM32
+
+#include <Arduino.h>
+#include <STM32FreeRTOS.h>
+
+constexpr int LED = PC13;
+constexpr int WAIT = 500;
+
+// define two tasks for Blink & AnalogRead
+void TaskBlink(void *pvParameters);
+
+// the setup function runs once when you press reset or power the board
+void setup() {
+
+    // initialize serial communication at 9600 bits per second:
+    Serial.begin(9600);
+
+    // while (!Serial) {
+    //     ; // wait for serial port to connect. Needed for native USB, on LEONARDO, MICRO, YUN, and
+    //       // other 32u4 based boards.
+    // }
+
+    xTaskCreate(TaskBlink, (const portCHAR *)"Blink", 128, NULL, 2, NULL);
+
+    // start scheduler
+    vTaskStartScheduler();
+    Serial.println("Insufficient RAM");
+    while (1) // error if it ends up here
+        ;
+}
+
+void loop() {
+    // Empty. Things are done in Tasks.
+}
+
+void TaskBlink(void *pvParameters) {
+    pinMode(LED, OUTPUT);
+    while (true) {
+        digitalWrite(LED, HIGH);
+        osDelay(WAIT);
+        digitalWrite(LED, LOW);
+        osDelay(WAIT);
+    }
+}
+
+#elif ESP_PLATFORM
+
 #include "esp_log.h"
 #include "esp_timer.h"
 #include "freertos/FreeRTOS.h"
@@ -36,3 +83,5 @@ void app_main() {
         vTaskDelay(1000 / portTICK_PERIOD_MS);
     }
 }
+
+#endif
