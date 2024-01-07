@@ -3,14 +3,19 @@
  * @author Gustice
  * @brief Queue Wrapper
  * @date 2023-11-01
- * 
+ *
  * @copyright Copyright (c) 2023
  */
 
 #pragma once
 
+#ifdef ARDUINO_ARCH_STM32
+#include <FreeRTOS/Source/include/FreeRTOS.h>
+#include <FreeRTOS/Source/include/queue.h>
+#elif ESP_PLATFORM
 #include <freertos/FreeRTOS.h>
 #include <freertos/queue.h>
+#endif
 #include <memory>
 #include <string_view>
 
