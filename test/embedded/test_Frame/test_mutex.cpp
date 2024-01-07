@@ -1,12 +1,8 @@
-#include "esp_log.h"
-#include "freertos/FreeRTOS.h"
-#include "freertos/task.h"
-#include <unity.h>
+#include "test.hpp"
 
-#include "mutex.hpp"
-#include "semaphore.hpp"
-#include "task.hpp"
-#include "teimUtils.hpp"
+#include <Mutex.hpp>
+#include <Semaphore.hpp>
+#include <Task.hpp>
 
 using namespace fos;
 
@@ -29,9 +25,7 @@ static void testMutex() {
 }
 
 static Semaphore starter1;
-static void testClaimer(void *arg) {
-    auto &m = *static_cast<Mutex *>(arg);
-
+static void testClaimer(Mutex &m) {
     m.claim();
     starter1.give();
     vTaskDelay(SHORT_DELAY);
@@ -45,7 +39,7 @@ static void testClaimer(void *arg) {
 static void testMutexTiming() {
     static Mutex eut;
 
-    Task claimer(testClaimer, eut, "signal1");
+    TaskT<Mutex &> claimer(testClaimer, eut, "signal1");
     starter1.take(100);
     { // All ok
         TimeTest timer;
@@ -54,7 +48,7 @@ static void testMutexTiming() {
         eut.release();
     }
     starter1.take(100);
-    { // Timout
+    { // Timeout
         TimeTest timer;
         TEST_ASSERT_FALSE(eut.claim(20));
         TEST_ASSERT_INT_WITHIN(1, 20, timer.getRunTime());

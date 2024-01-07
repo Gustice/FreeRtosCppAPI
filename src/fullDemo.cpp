@@ -1,3 +1,9 @@
+/**
+ * @file fullDemo.cpp
+ * @author Gustice
+ * @brief Coherent demonstration of FreeRTOS-Abstraction in small environment
+ * @copyright Copyright (c) 2024
+ */
 #ifdef ARDUINO_ARCH_STM32
 
 #include <Arduino.h>
@@ -18,37 +24,77 @@ constexpr int LED = 2;
 
 #endif
 
-#include "mutex.hpp"
-#include "queue.hpp"
-#include "semaphore.hpp"
-#include "task.hpp"
+#include "Mutex.hpp"
+#include "Queue.hpp"
+#include "Semaphore.hpp"
+#include "Task.hpp"
+#include <string>
 
 using namespace fos;
 using namespace std::literals::string_view_literals;
 
 constexpr int WAIT = 500;
 
-// define two tasks for Blink & AnalogRead
-void TaskBlink(int waitMs) {
-    Serial.println("starting blink task");
-    pinMode(LED, OUTPUT);
+/// @brief Arbitrary definition for message type (to be used as queue template parameter)
+struct TxMsg {
+    TxMsg(uint32_t v, std::string msg) : cnt(v), message(msg) {}
+    uint32_t cnt;
+    std::string message;
+};
+
+/// @brief Global semaphore for blink tasks
+Semaphore blinkSem;
+
+/// @brief Parameterless task entry for generation of blink signals
+/// @note uses global semaphore
+void TaskBlinkProvider() {
+    Serial.println("starting blink provider task");
     while (true) {
-        digitalToggle(LED);
-        Task::delayMs(waitMs);
+        Task::delayMs(WAIT); // wait
+        blinkSem.give();     // then signal a blink event
     }
 }
 
-void TaskTick() {
+/// @brief Parameterless task entry for execution of blink signals
+/// @note uses global semaphore
+void TaskBlink() {
+    Serial.println("starting blink execution task");
+    pinMode(LED, OUTPUT);
+    while (true) {
+        blinkSem.take();    // wait for blink event signal
+        digitalToggle(LED); // execute blink event
+        Serial.printf("Blink tick\n\r");
+    }
+}
+
+/// @brief Parametrized task entry for message provider (generates message object)
+/// @param queue reference to appropriate queue
+void MessageProvider(Queue<TxMsg> &queue) {
     uint32_t cnt{};
     while (true) {
-        Serial.printf("tick %d\n\r", cnt++);
+        auto e = std::make_unique<TxMsg>(cnt++, "tick");
+        queue.enqueue(std::move(e));
         Task::delayMs(1000);
     }
 }
 
+/// @brief Parametrized task entry for message consumer (sends message over UART)
+/// @param queue reference to appropriate queue
+void MessageConsumer(Queue<TxMsg> &queue) {
+    while (true) {
+        auto msg = queue.dequeue(); // Wait with infinit timeout, guaranteed to succeed
+        Serial.printf("Message: %s %d\n\r", msg->message.c_str(), msg->cnt);
+    }
+}
+
 void setupTasks() {
-    static TaskT<int> blinkerTask(TaskBlink, WAIT, "Blink"sv, StackSize);
-    static Task tickerTask(TaskTick, "Tick"sv, StackSize);
+    /// @note: All definitions as static instances to not be destructed after loosing scope
+    static Queue<TxMsg> txQueue(8);
+    static Task blinkerTask(TaskBlink, "BlinkExec", StackSize);
+    static Task blinkeProviderTask(TaskBlinkProvider, "BlinkFlags", StackSize);
+
+    static TaskT<Queue<TxMsg> &> tickerTask(MessageProvider, txQueue, "Tick", StackSize);
+    static TaskT<Queue<TxMsg> &> senderTask(MessageConsumer, txQueue, "Sender", StackSize);
 }
 
 #ifdef ARDUINO_ARCH_STM32

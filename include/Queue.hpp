@@ -26,7 +26,7 @@ namespace fos {
  *
  * @tparam T Type for message payload
  */
-template <typename T> class MessageQueue {
+template <typename T> class Queue {
   private:
     bool _isActive;
     QueueHandle_t xQueue;
@@ -39,13 +39,13 @@ template <typename T> class MessageQueue {
 
     /// @brief Constructor
     /// @param size number of slots in queue
-    MessageQueue(size_t size) {
+    Queue(size_t size) {
         xQueue = xQueueCreate(size, sizeof(T *));
         configASSERT(xQueue != 0 && "Queue create must finish successfully");
         _isActive = true;
     }
 
-    ~MessageQueue() {
+    ~Queue() {
         vQueueDelete(xQueue);
     }
 

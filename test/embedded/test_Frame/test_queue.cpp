@@ -1,11 +1,8 @@
-#include "esp_log.h"
-#include "freertos/FreeRTOS.h"
-#include "freertos/task.h"
-#include <unity.h>
+#include "test.hpp"
 
-#include "queue.hpp"
-#include "task.hpp"
-#include "teimUtils.hpp"
+#include <Queue.hpp>
+#include <Task.hpp>
+#include <string>
 
 using namespace fos;
 
@@ -18,7 +15,7 @@ struct MessageFrame {
 };
 
 static void enqueueThenDequeue(void) {
-    MessageQueue<MessageFrame> eut(10);
+    Queue<MessageFrame> eut(10);
 
     auto e = std::make_unique<MessageFrame>(1, "one");
     eut.enqueue(std::move(e));
@@ -30,7 +27,7 @@ static void enqueueThenDequeue(void) {
 }
 
 static void enqueueThenDequeueMultiple(void) {
-    MessageQueue<MessageFrame> eut(10);
+    Queue<MessageFrame> eut(10);
 
     auto e = std::make_unique<MessageFrame>(1, "one");
     eut.enqueue(std::move(e));
@@ -55,7 +52,7 @@ static void enqueueThenDequeueMultiple(void) {
 
 static void enqueueCyclically(void) {
     constexpr int Size = 10;
-    MessageQueue<MessageFrame> eut(Size);
+    Queue<MessageFrame> eut(Size);
     for (size_t i = 0; i < Size * 2; i++) {
         auto e = std::make_unique<MessageFrame>(i, "Some message");
         eut.enqueue(std::move(e));
@@ -68,7 +65,7 @@ static void enqueueCyclically(void) {
 }
 
 static void enqueue_till_overflow(void) {
-    MessageQueue<MessageFrame> eut(3);
+    Queue<MessageFrame> eut(3);
 
     auto e = std::make_unique<MessageFrame>(1, "one");
     auto r = eut.enqueue(std::move(e));
@@ -91,7 +88,7 @@ static void enqueue_till_overflow(void) {
 }
 
 static void enqueueThenDequeueTooMany(void) {
-    MessageQueue<MessageFrame> eut(10);
+    Queue<MessageFrame> eut(10);
 
     auto e = std::make_unique<MessageFrame>(1, "one");
     eut.enqueue(std::move(e));
@@ -108,8 +105,7 @@ static void enqueueThenDequeueTooMany(void) {
     TEST_ASSERT_EQUAL(nullptr, r.get());
 }
 
-static void queue1Gen(void *arg) {
-    auto &q = *static_cast<MessageQueue<MessageFrame> *>(arg);
+static void queue1Gen(Queue<MessageFrame> &q) {
     vTaskDelay(SHORT_DELAY);
     auto e = std::make_unique<MessageFrame>(0, "msg");
     q.enqueue(std::move(e));
@@ -117,8 +113,8 @@ static void queue1Gen(void *arg) {
 }
 
 static void testTiming() {
-    static MessageQueue<MessageFrame> eut(8);
-    Task signaler(queue1Gen, eut, "queue1Gen");
+    static Queue<MessageFrame> eut(8);
+    TaskT<Queue<MessageFrame> &> signaler(queue1Gen, eut, "queue1Gen");
     { // All ok
         TimeTest timer;
         auto r = eut.dequeue(100);
@@ -126,7 +122,7 @@ static void testTiming() {
         TEST_ASSERT_INT_WITHIN(1, SHORT_DELAY, timer.getRunTime());
     }
 
-    { // Timout
+    { // Timeout
         TimeTest timer;
         auto r = eut.dequeue(20);
         TEST_ASSERT_NULL(r.get());
@@ -134,8 +130,7 @@ static void testTiming() {
     }
 }
 
-static void senderTask(void *arg) {
-    auto &q = *static_cast<MessageQueue<MessageFrame> *>(arg);
+static void senderTask(Queue<MessageFrame> &q) {
     size_t i = 0;
     while (q.isActive()) {
         auto e = std::make_unique<MessageFrame>(i++, "Some message");
@@ -146,8 +141,8 @@ static void senderTask(void *arg) {
 
 static void enqueueSeriesOfMessages(void) {
     constexpr int Size = 10;
-    MessageQueue<MessageFrame> eut(Size);
-    Task sender(senderTask, eut, "sender");
+    Queue<MessageFrame> eut(Size);
+    TaskT<Queue<MessageFrame> &> sender(senderTask, eut, "sender");
     for (size_t i = 0; i < Size * 2; i++) {
         auto r = eut.dequeue(100);
         TEST_ASSERT_NOT_NULL(r.get());

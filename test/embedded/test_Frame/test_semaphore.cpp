@@ -1,11 +1,7 @@
-#include "esp_log.h"
-#include "freertos/FreeRTOS.h"
-#include "freertos/task.h"
-#include <unity.h>
+#include "test.hpp"
 
-#include "semaphore.hpp"
-#include "task.hpp"
-#include "teimUtils.hpp"
+#include <Semaphore.hpp>
+#include <Task.hpp>
 
 using namespace fos;
 
@@ -67,9 +63,7 @@ static void testCountingSemInit() {
     // ...
 }
 
-static void test1Signal(void *arg) {
-    auto &s = *static_cast<Semaphore *>(arg);
-
+static void test1Signal(Semaphore &s) {
     vTaskDelay(SHORT_DELAY);
     s.give();
     // Kill by return
@@ -78,7 +72,7 @@ static void test1Signal(void *arg) {
 static void testBinarySemTiming() {
     static Semaphore eut;
 
-    Task signaler(test1Signal, eut, "signal1");
+    TaskT<Semaphore &> signaler(test1Signal, eut, "signal1");
     { // All ok
         TimeTest timer;
         TEST_ASSERT_TRUE(eut.take(100));
@@ -100,17 +94,13 @@ static void testBinarySemTiming() {
 }
 
 static int syncCount = 0;
-static void producerTask(void *arg) {
-    auto &s = *static_cast<Semaphore *>(arg);
-
+static void producerTask(Semaphore &s) {
     while (true) {
         s.give();
         vTaskDelay(SHORT_DELAY);
     };
 }
-static void consumerTask(void *arg) {
-    auto &s = *static_cast<Semaphore *>(arg);
-
+static void consumerTask(Semaphore &s) {
     while (true) {
         s.take();
         syncCount++;
@@ -119,8 +109,8 @@ static void consumerTask(void *arg) {
 static void twoTasksThrowingSemaphores() {
     static Semaphore eut;
 
-    Task producer(producerTask, eut, "producer");
-    Task consumer(consumerTask, eut, "consumer");
+    TaskT<Semaphore &> producer(producerTask, eut, "producer");
+    TaskT<Semaphore &> consumer(consumerTask, eut, "consumer");
     vTaskDelay(5 * SHORT_DELAY);
     TEST_ASSERT_INT_WITHIN(1, 5, syncCount);
     producer.kill();
