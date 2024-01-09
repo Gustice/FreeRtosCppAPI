@@ -47,7 +47,7 @@ class Semaphore {
     /// @brief Constructor for conting semaphore
     /// @param maxCount Counting limit
     /// @param init Initial count
-    Semaphore(uint maxCount, uint init = 0) : SemType(Semaphore::Counting) {
+    Semaphore(uint32_t maxCount, uint32_t init = 0) : SemType(Semaphore::Counting) {
         _handle = xSemaphoreCreateCounting(maxCount, init);
         configASSERT(_handle != 0 && "Semaphore create must finish successfully");
     }

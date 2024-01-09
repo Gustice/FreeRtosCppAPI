@@ -33,11 +33,11 @@ constexpr int LED = 2;
 using namespace fos;
 using namespace std::literals::string_view_literals;
 
-constexpr int WAIT = 500;
+constexpr int WAIT = 1000;
 
 /// @brief Arbitrary definition for message type (to be used as queue template parameter)
 struct TxMsg {
-    TxMsg(uint32_t v, std::string msg) : cnt(v), message(msg) {}
+    TxMsg(uint32_t c, std::string m) : cnt(c), message(m){};
     uint32_t cnt;
     std::string message;
 };
@@ -61,8 +61,10 @@ void TaskBlink() {
     Serial.println("starting blink execution task");
     pinMode(LED, OUTPUT);
     while (true) {
-        blinkSem.take();    // wait for blink event signal
-        digitalToggle(LED); // execute blink event
+        blinkSem.take();      // wait for blink event signal
+        digitalWrite(LED, 0); // execute blink event
+        Task::delayMs(100);   // wait
+        digitalWrite(LED, 1); // execute blink event
         Serial.printf("Blink tick\n\r");
     }
 }
@@ -74,7 +76,7 @@ void MessageProvider(Queue<TxMsg> &queue) {
     while (true) {
         auto e = std::make_unique<TxMsg>(cnt++, "tick");
         queue.enqueue(std::move(e));
-        Task::delayMs(1000);
+        Task::delayMs(WAIT);
     }
 }
 
