@@ -1,0 +1,29 @@
+{
+    "C_Cpp.autoAddFileAssociations": false,
+    "editor.formatOnSave": true,
+    "doxdocgen.c.triggerSequence": "/**",
+    "doxdocgen.generic.authorName": "Gustice",
+    "doxdocgen.generic.dateFormat": "YYYY-MM-DD",
+    "doxdocgen.generic.authorEmail": "",
+    "doxdocgen.generic.authorTag": "@author {author}", // used to be "@author {author} ({email})"
+    "doxdocgen.file.copyrightTag": [
+        "@copyright Copyright (c) {year}"
+    ],
+    "doxdocgen.file.customTag": [],
+    "doxdocgen.file.fileOrder": [
+        "file",
+        "author",
+        "brief",
+        "date",
+        "empty",
+        "copyright",
+        "custom"
+    ],
+    "doxdocgen.generic.order": [
+        "brief",
+        "empty",
+        "tparam",
+        "param",
+        "return",
+    ]
+}

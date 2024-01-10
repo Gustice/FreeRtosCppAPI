@@ -1,20 +1,20 @@
 {
     "name": "FreeRtosCppAPI",
-    "version": "0.1.0",
+    "version": "0.5.0",
     "description": "Simplify feature-rich FreeRTOS utilities by wrapping them in C++ classes",
-    "keywords": "FreeRTOS, C++, Wrapper",
+    "keywords": "FreeRTOS, C++, Wrapper, API",
     "repository": {
         "type": "git",
         "url": "https://github.com/Gustice/FreeRtosCppAPI.git"
     },
     "authors": [
         {
-            "name": "Jakob Gegeniger",
-            "email": "Jakob.Gegeniger@outlook.de"
+            "name": "Gustice",
+            "email": "jakob.ger@gmail.com"
         }
     ],
     "license": "MIT",
     "dependencies": {},
-    "frameworks": "*",
+    "frameworks": "espidf, STM32Cube",
     "platforms": "*"
 }
