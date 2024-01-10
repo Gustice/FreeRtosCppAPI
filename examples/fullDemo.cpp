@@ -4,12 +4,16 @@
  * @brief Coherent demonstration of FreeRTOS-Abstraction in small environment
  * @copyright Copyright (c) 2024
  */
+
 #ifdef ARDUINO_ARCH_STM32
 
 #include <Arduino.h>
 #include <STM32FreeRTOS.h>
 constexpr int StackSize = 256;
 constexpr int LED = PC13;
+#define TerminalPrint(...)                                                                         \
+    Serial.printf(__VA_ARGS__);                                                                    \
+    Serial.println()
 
 #elif ESP_PLATFORM
 
@@ -21,6 +25,8 @@ constexpr int LED = PC13;
 #include <stdio.h>
 constexpr int StackSize = 1024;
 constexpr int LED = 2;
+
+#define TerminalPrint(format, ...) ESP_LOGI("main", format, __VA_ARGS__)
 
 #endif
 
@@ -45,10 +51,13 @@ struct TxMsg {
 /// @brief Global semaphore for blink tasks
 Semaphore blinkSem;
 
+void setupLedPin();
+void toggleLedPin();
+
 /// @brief Parameterless task entry for generation of blink signals
 /// @note uses global semaphore
 void TaskBlinkProvider() {
-    Serial.println("starting blink provider task");
+    TerminalPrint("starting blink provider task");
     while (true) {
         Task::delayMs(WAIT); // wait
         blinkSem.give();     // then signal a blink event
@@ -58,14 +67,14 @@ void TaskBlinkProvider() {
 /// @brief Parameterless task entry for execution of blink signals
 /// @note uses global semaphore
 void TaskBlink() {
-    Serial.println("starting blink execution task");
-    pinMode(LED, OUTPUT);
+    TerminalPrint("starting blink execution task");
+    setupLedPin();
     while (true) {
-        blinkSem.take();      // wait for blink event signal
-        digitalWrite(LED, 0); // execute blink event
-        Task::delayMs(100);   // wait
-        digitalWrite(LED, 1); // execute blink event
-        Serial.printf("Blink tick\n\r");
+        blinkSem.take();    // wait for blink event signal
+        toggleLedPin();     // execute blink event
+        Task::delayMs(100); // wait
+        toggleLedPin();     // execute blink event
+        TerminalPrint("Blink tick");
     }
 }
 
@@ -85,7 +94,7 @@ void MessageProvider(Queue<TxMsg> &queue) {
 void MessageConsumer(Queue<TxMsg> &queue) {
     while (true) {
         auto msg = queue.dequeue(); // Wait with infinit timeout, guaranteed to succeed
-        Serial.printf("Message: %s %d\n\r", msg->message.c_str(), msg->cnt);
+        TerminalPrint("Message: %s %lu", msg->message.c_str(), msg->cnt);
     }
 }
 
@@ -113,7 +122,7 @@ void setup() {
     // start scheduler
     vTaskStartScheduler();
 
-    Serial.println("Insufficient RAM");
+    TerminalPrint("Insufficient RAM");
     while (1) // error if it ends up here
         ;
 }
@@ -122,31 +131,33 @@ void loop() {
     // Empty. Things are done in Tasks.
 }
 
-#elif ESP_PLATFORM
+void setupLedPin() {
+    pinMode(LED, OUTPUT);
+}
+void toggleLedPin() {
+    digitalWrite(LED, 0); // execute blink event
+}
 
-const int StackSize = 2048;
+#elif ESP_PLATFORM
 
 extern "C" { // This switch allows the ROS C-implementation to find this main
 void app_main(void);
 }
 
-static bool taskWasCalled = false;
-void task1() {
-    ESP_LOGI("Test", "subroutinge called");
-    taskWasCalled = true;
+void app_main() {
+    void setupTasks();
+
     while (true) {
-        vTaskDelay(100);
+        ESP_LOGI("main", "healt tick");
+        vTaskDelay(1000 / portTICK_PERIOD_MS);
     }
 }
 
-void app_main() {
-
-    static Task task(task1, "task1");
-
-    while (true) {
-        ESP_LOGI("main", "tick");
-        vTaskDelay(1000 / portTICK_PERIOD_MS);
-    }
+void setupLedPin() {
+    // no Buildin-led on XIAO C3
+}
+void toggleLedPin() {
+    // no Buildin-led on XIAO C3
 }
 
 #endif
