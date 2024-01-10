@@ -25,9 +25,28 @@ void runTests() {
 
 #ifdef ARDUINO_ARCH_STM32
 
-void setup() {
-    delay(2000);
+static void testerTask(void *) {
     runTests();
+    while (true) {
+        vTaskDelay(1000);
+    }
+}
+
+void setup() {
+    Serial.begin(115200);
+    while (!Serial) {
+        // wait for serial port to connect. Needed for native USB
+    }
+    delay(500);
+
+    auto ret = xTaskCreate(testerTask, "Terter", 0x1000, nullptr, 1, nullptr);
+
+    // start scheduler
+    vTaskStartScheduler();
+
+    Serial.println("Insufficient RAM");
+    while (1) // error if it ends up here
+        ;
 }
 
 void loop() {
@@ -45,4 +64,5 @@ void app_main(void) {
     vTaskDelay(2000 / portTICK_PERIOD_MS);
     runTests();
 }
+
 #endif

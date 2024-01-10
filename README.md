@@ -123,6 +123,22 @@ static void Consumer() {
 
 The only benefit is that the whole syntax is cleaner and easier to develop because as you have the instance on hand intellisense can support you finding the correct method on it very quick.
 
+## Used Development
+
+### Espressif
+
+- Tested on: `seeed_xiao_esp32c3` board
+- pIO-platform: `Espressif 32` `V 6.4.0`
+- framework: `espidf`
+
+### STM32
+
+- Tested on: `genericSTM32F401CC` board
+- pIO-platform: `ST STM32` `17.2.0`
+- framework: `espidf` 
+- additional library: `STM32duino FreeRTOS`
+
+
 ## ToDo
 
 It would be nice to provide more of the api calls like the static construction of tasks and message queues and events during interrupts
