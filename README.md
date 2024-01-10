@@ -14,7 +14,7 @@ the necessity of casting void arguments to the correct type again.
 
 Of course you are able to create a task in quite few steps but passing all the required arguments
 and casting optional task parameter to its intended type again, is annoying and tends to be error prone.
-However, are you aware that a task must not return and if it still return it should be deleted?
+That said, are you also aware that a task must not return and if it still return it should be deleted?
 
 
 <table>
@@ -123,6 +123,25 @@ static void Consumer() {
 
 The only benefit is that the whole syntax is cleaner and easier to develop because as you have the instance on hand intellisense can support you finding the correct method on it very quick.
 
+### Mutex
+
+In case of mutexes its mostly the same as for semaphores. However, the syntax provides a better understanding of what is happening with the ressource. Also a `MutexGuard` is provided for automatically releasing of the resource.
+
+```c++
+Resource CommonRessource{}
+Mutex mtx;
+void MutatorTask() {
+    while (true) {
+        { 
+            MutexGuard guard(mtx); 
+            // guard claims resource at this point by mtx.claim()
+            CommonRessource.mutate();
+        } // guard releases resource at this point by mtx.release();
+        // .. other work to do
+    }
+}
+```
+
 ## Used Development
 
 ### Espressif
@@ -138,7 +157,11 @@ The only benefit is that the whole syntax is cleaner and easier to develop becau
 - framework: `espidf` 
 - additional library: `STM32duino FreeRTOS`
 
+## Known Issues
+
+- Task.kill() / kill by return task body / kill by destruction (leaving scope) interfere with each other in a way that application crushes => ... ensure that task is killed only once
 
 ## ToDo
 
 It would be nice to provide more of the api calls like the static construction of tasks and message queues and events during interrupts
+Message queues should also work with rvalue-references
