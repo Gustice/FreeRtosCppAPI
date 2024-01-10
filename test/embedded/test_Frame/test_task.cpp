@@ -36,16 +36,15 @@ static void callableTask2() {
 }
 
 static void checkIfTaskIsKilled() {
-#if (INCLUDE_xTaskGetHandle == 1)
     static Task task(callableTask2, "task2");
-    auto handle = xTaskGetHandle("task2");
+    auto handle = task.getHandle();
     configASSERT(handle);
-    TEST_ASSERT_EQUAL(eTaskState::eReady, eTaskGetState(handle));
+    TEST_ASSERT_TRUE(eTaskState::eReady == task.getState() ||
+                     eTaskState::eBlocked == task.getState());
     Task::delayMs(50);
     TEST_ASSERT_TRUE(taskWasCalled);
     task.kill();
     TEST_ASSERT_EQUAL(eTaskState::eDeleted, eTaskGetState(handle));
-#endif
 }
 
 static std::array<int, 2> values;
@@ -63,15 +62,13 @@ static void oneOfMultiple(int idx) {
 }
 
 static void checkIfTwoTasksDoNotInterfere() {
+    // Both tasks are run by starting the same static function body
     int param1 = 0;
     TaskT<int> task1(oneOfMultiple, param1, "pTask1");
     int param2 = 1;
     TaskT<int> task2(oneOfMultiple, param2, "pTask2");
 
     Task::delayMs(50);
-
-    task1.kill();
-    task2.kill();
 
     TEST_ASSERT_EQUAL(10, values[0]);
     TEST_ASSERT_EQUAL(-10, values[1]);

@@ -23,14 +23,14 @@ void runTests() {
     UNITY_END(); // stop unit testing
 }
 
-#ifdef ARDUINO_ARCH_STM32
-
 static void testerTask(void *) {
     runTests();
     while (true) {
         vTaskDelay(1000);
     }
 }
+
+#ifdef ARDUINO_ARCH_STM32
 
 void setup() {
     Serial.begin(115200);
@@ -39,7 +39,7 @@ void setup() {
     }
     delay(500);
 
-    auto ret = xTaskCreate(testerTask, "Terter", 0x1000, nullptr, 1, nullptr);
+    xTaskCreate(testerTask, "Tester", 0x1000, nullptr, 1, nullptr);
 
     // start scheduler
     vTaskStartScheduler();
@@ -62,7 +62,10 @@ void app_main(void) {
     // NOTE!!! Wait for >2 secs
     // if board doesn't support software reset via Serial.DTR/RTS
     vTaskDelay(2000 / portTICK_PERIOD_MS);
-    runTests();
+    xTaskCreate(testerTask, "Tester", 0x4000, nullptr, 1, nullptr);
+    while (true) {
+        vTaskDelay(1000);
+    }
 }
 
 #endif

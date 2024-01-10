@@ -66,7 +66,9 @@ static void testCountingSemInit() {
 static void test1Signal(Semaphore &s) {
     vTaskDelay(SHORT_DELAY);
     s.give();
-    // Kill by return
+    while (true) {
+        vTaskDelay(SHORT_DELAY);
+    };
 }
 
 static void testBinarySemTiming() {
@@ -79,13 +81,13 @@ static void testBinarySemTiming() {
         TEST_ASSERT_INT_WITHIN(1, SHORT_DELAY, timer.getRunTime());
     }
 
-    { // Timout
+    { // Timeout
         TimeTest timer;
         TEST_ASSERT_FALSE(eut.take(20));
         TEST_ASSERT_INT_WITHIN(1, 20, timer.getRunTime());
     }
 
-    { // NoWeit timeout
+    { // NoWait timeout
         Semaphore passiveSem;
         TimeTest timer;
         TEST_ASSERT_FALSE(passiveSem.take(0));
@@ -113,8 +115,6 @@ static void twoTasksThrowingSemaphores() {
     TaskT<Semaphore &> consumer(consumerTask, eut, "consumer");
     vTaskDelay(5 * SHORT_DELAY);
     TEST_ASSERT_INT_WITHIN(1, 5, syncCount);
-    producer.kill();
-    consumer.kill();
 }
 
 void runSemaphoreTests(void) {

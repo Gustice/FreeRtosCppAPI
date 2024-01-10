@@ -33,7 +33,9 @@ static void testClaimer(Mutex &m) {
     vTaskDelay(SHORT_DELAY);
     m.claim();
     starter1.give();
-    // kill by return
+    while (true) {
+        vTaskDelay(SHORT_DELAY);
+    };
 }
 
 static void testMutexTiming() {

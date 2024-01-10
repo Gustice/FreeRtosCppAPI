@@ -109,7 +109,9 @@ static void queue1Gen(Queue<MessageFrame> &q) {
     vTaskDelay(SHORT_DELAY);
     auto e = std::make_unique<MessageFrame>(0, "msg");
     q.enqueue(std::move(e));
-    // Kill by return
+    while (true) {
+        vTaskDelay(SHORT_DELAY);
+    };
 }
 
 static void testTiming() {
@@ -150,7 +152,6 @@ static void enqueueSeriesOfMessages(void) {
     }
     eut.signalClose();
     TEST_ASSERT_TRUE(true);
-    sender.kill();
 }
 
 void runQueueTests(void) {

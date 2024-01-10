@@ -55,8 +55,20 @@ class TaskBase {
     /// @brief Kill a task
     /// @note It can lead to undefined behaviour when one task deletes another task on a
     ///   multi-core system. Hence a task should clear itself.
-    void kill() {
+    void kill() { // NOTE: this leads to undefined behavior if interferes with Destructor
         vTaskDelete(_handle);
+    }
+
+    /// @brief Get task state
+    /// @return FreeRTOS Task state
+    eTaskState getState() {
+        return eTaskGetState(_handle);
+    }
+
+    /// @brief Get task handle
+    /// @return FreeRTOS Task handle
+    TaskHandle_t getHandle() {
+        return _handle;
     }
 
     /// @brief Delay function
@@ -139,7 +151,7 @@ template <typename T> class TaskT : public TaskBase {
     /// @param stack Stacksize if not default
     /// @param prio Priority if not default
     TaskT(TaskSignature call, const T &param, const char *name, size_t stack = DefaultStackSize,
-          Priority prio = MIN_PRIORITY) 
+          Priority prio = MIN_PRIORITY)
         : _param{call, param} {
         auto ret = xTaskCreate(TaskFrame, name, stack, this, MIN_PRIORITY, &_handle);
         configASSERT(pdPASS == ret && "Task create must finish successfully");
